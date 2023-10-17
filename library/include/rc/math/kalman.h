@@ -153,6 +153,23 @@ rc_kalman_t rc_kalman_empty(void);
 int rc_kalman_alloc_lin(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix_t H, rc_matrix_t Q, rc_matrix_t R, rc_matrix_t Pi);
 
 /**
+ * @brief      Allocates memory for a Kalman filter of given dimensions, x_est will be inicialized as a zero vector
+ *
+ * @param      kf    pointer to struct to be allocated
+ * @param[in]  F     undriven state-transition model
+ * @param[in]  G     control input model
+ * @param[in]  H     observation model
+ * @param[in]  Q     Process noise covariance, can be updated later
+ * @param[in]  R     Measurement noise covariance, can be updated later
+ * @param[in]  Pi    Initial P matrix
+ * @param[in]  x_pre Initial x prediction vector
+ *
+ * @return     0 on success, -1 on failure
+ */
+int rc_kalman_new_alloc(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix_t H, rc_matrix_t Q, 
+						rc_matrix_t R, rc_matrix_t Pi, rc_vector_t x_pre);
+
+/**
  * @brief      Allocates memory for a Kalman filter of given dimensions
  *
  * @param      kf    pointer to struct to be allocated
@@ -243,6 +260,44 @@ int rc_kalman_update_lin(rc_kalman_t* kf, rc_vector_t u, rc_vector_t y);
  */
 int rc_kalman_update_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t H, rc_vector_t x_pre,  rc_vector_t y, rc_vector_t h);
 
+
+/**
+ * @brief      Kalman Filter measurement update step.
+ *
+ * Updates P & x_est. Assumes that you have done the non-linear prediction
+ * step in your own function which should calculate the Jacobians F(x[k|k-1]) &
+ * G(x[k|k-1])
+ *
+ * Also updates the step counter in the rc_kalman_t struct
+ *
+ * @param      kf     pointer to struct to be updated
+ * @param[in]  F      Jacobian of state transition matrix linearized at x_pre
+ * @param[in]  G      Jacobian of control matrix linearized at x_pre
+ * @param[in]  u	  control vector
+ *
+ * @return     0 on success, -1 on failure
+ */
+int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vector_t u){
+
+/**
+ * @brief      Kalman Filter measurement update step.
+ *
+ * -Kalman measurement Update:
+ * - P[k|k-1] = F*P[k-1|k-1]*F^T + Q
+ * - S = H*P*H^T + R
+ * - L = P*(H^T)*(S^-1)
+ * - x[k|k] = x[k|k-1] + L*y
+ * - P[k|k] = (I - L*H)*P
+ *
+ * Also updates the step counter in the rc_kalman_t struct
+ *
+ * @param      kf     pointer to struct to be updated
+ * @param[in]  H      Jacobian of observation matrix linearized at x_pre
+ * @param[in]  y      new sensor data
+ *
+ * @return     0 on success, -1 on failure
+ */
+int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t y);
 
 #ifdef __cplusplus
 }
