@@ -30,8 +30,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <rc/math/vector.h>
-#include <rc/math/ring_buffer.h>
+#include "vector.h"
+#include "ring_buffer.h"
 
 /**
  * @brief      Struct containing configuration and state of a SISO filter.

@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include <rc/math/vector.h>
+#include "vector.h"
 
 /**
  * @brief      Prints a polynomial in human-readable format in one line.

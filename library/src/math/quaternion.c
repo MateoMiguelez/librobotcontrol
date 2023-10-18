@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <rc/math/quaternion.h>
+#include "../../include/rc/math/quaternion.h"
 #include "algebra_common.h"
 
 double rc_quaternion_norm(rc_vector_t q)

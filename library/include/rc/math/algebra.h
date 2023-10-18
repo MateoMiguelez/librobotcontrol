@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#include <rc/math/matrix.h>
+#include "matrix.h"
 
 /**
  * @brief      Performs LUP decomposition on matrix A with partial pivoting.

@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <math.h>	// for sqrt, pow, etc
 
-#include <rc/math/polynomial.h>
+#include "../../include/rc/math/polynomial.h"
 
 #include "algebra_common.h"
 

@@ -13,9 +13,9 @@
 #include <math.h>	// for sqrt, pow, etc
 #include <string.h>	// for memcpy
 
-#include <rc/math/vector.h>
-#include <rc/math/matrix.h>
-#include <rc/math/algebra.h>
+#include "../../include/rc/math/vector.h"
+#include "../../include/rc/math/matrix.h"
+#include "../../include/rc/math/algebra.h"
 #include "algebra_common.h"
 
 

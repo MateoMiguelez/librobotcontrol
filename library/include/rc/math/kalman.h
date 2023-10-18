@@ -72,8 +72,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <rc/math/vector.h>
-#include <rc/math/matrix.h>
+#include "vector.h"
+#include "matrix.h"
 
 
 /*
@@ -277,7 +277,7 @@ int rc_kalman_update_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t H, rc_vecto
  *
  * @return     0 on success, -1 on failure
  */
-int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vector_t u){
+int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vector_t u);
 
 /**
  * @brief      Kalman Filter measurement update step.

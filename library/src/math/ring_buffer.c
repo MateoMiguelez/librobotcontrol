@@ -21,7 +21,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <rc/math/ring_buffer.h>
+#include "../../include/rc/math/ring_buffer.h"
 
 #include "algebra_common.h"
 

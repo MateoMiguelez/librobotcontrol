@@ -12,7 +12,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <rc/math/other.h>
+#include "../../include/rc/math/other.h"
 
 // preposessor macros
 #define unlikely(x)	__builtin_expect (!!(x), 0)

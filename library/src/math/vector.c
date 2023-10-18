@@ -22,8 +22,8 @@
 #include <math.h>	// for sqrt, pow, etc
 #include <float.h>	// for FLT_MAX DBL_MAX
 
-#include <rc/math/other.h>
-#include <rc/math/vector.h>
+#include "../../include/rc/math/other.h"
+#include "../../include/rc/math/vector.h"
 #include "algebra_common.h"
 
 

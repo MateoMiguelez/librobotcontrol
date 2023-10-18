@@ -13,8 +13,8 @@
 #include <stdlib.h>	// for malloc,calloc,free
 #include <string.h>	// for memcpy
 
-#include <rc/math/other.h>
-#include <rc/math/matrix.h>
+#include "../../include/rc/math/other.h"
+#include "../../include/rc/math/matrix.h"
 #include "algebra_common.h"
 
 

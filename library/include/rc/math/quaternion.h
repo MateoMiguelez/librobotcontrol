@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 
-#include <rc/math/vector.h>
-#include <rc/math/matrix.h>
+#include "vector.h"
+#include "matrix.h"
 
 /**
  * @brief      Returns the length of a quaternion vector by finding its 2-norm.

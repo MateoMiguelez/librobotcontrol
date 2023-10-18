@@ -1,0 +1,2 @@
+[submodule "librobotcontrol/"]
+	url = https://github.com/MateoMiguelez/librobotcontrol.git

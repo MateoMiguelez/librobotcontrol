@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-#include <rc/math/vector.h>
+#include "vector.h"
 
 /**
  * @brief      Struct containing the state of a matrix and a pointer to

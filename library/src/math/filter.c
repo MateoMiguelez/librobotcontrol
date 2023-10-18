@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <rc/math/filter.h>
-#include <rc/math/polynomial.h>
+#include "../../include/rc/math/filter.h"
+#include "../../include/rc/math/polynomial.h"
 
 #include "algebra_common.h"
 
