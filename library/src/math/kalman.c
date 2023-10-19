@@ -81,39 +81,43 @@ int rc_kalman_new_alloc(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix
 						rc_matrix_t R, rc_matrix_t Pi, rc_vector_t x_pre){
 	// sanity checks
 	if(kf==NULL){
-		fprintf(stderr, "ERROR in rc_kalman_alloc_lin, received NULL pointer\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc, received NULL pointer\n");
 		return -1;
 	}
 	if(!F.initialized || !H.initialized){
-		fprintf(stderr, "ERROR in rc_kalman_alloc, received uninitialized F or H\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc, received uninitialized F or H\n");
 		return -1;
 	}
 	if(!Q.initialized || !R.initialized){
-		fprintf(stderr, "ERROR in rc_kalman_alloc, received initialized P or Q\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc, received initialized P or Q\n");
 		return -1;
 	}
 	if(F.rows != F.cols){
-		fprintf(stderr, "ERROR in rc_kalman_alloc, F must be square\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc, F must be square\n");
 		return -1;
 	}
 	if(H.cols != F.cols){
-		fprintf(stderr, "ERROR in rc_kalman_alloc, F and H must have same number of columns\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc, F and H must have same number of columns\n");
 		return -1;
 	}
 	if(G.rows != F.rows){
-		fprintf(stderr, "ERROR in rc_kalman_alloc, F and G must have same number of rows\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc, F and G must have same number of rows\n");
 		return -1;
 	}
 	if(Q.rows != Q.cols){
-		fprintf(stderr, "ERROR in rc_kalman_alloc_ekf, Q must be square\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc_ekf, Q must be square\n");
+		return -1;
+	}
+	if((Q.cols != F.cols)){
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc_ekf u must have same dimension as rows of G\n");
 		return -1;
 	}
 	if(R.rows != R.cols){
-		fprintf(stderr, "ERROR in rc_kalman_alloc_ekf, R must be square\n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc_ekf, R must be square\n");
 		return -1;
 	}
 	if(x_pre.len != F.cols){
-		fprintf(stderr, "ERROR in rc_kalman_alloc_ekf, vector x_pre must have same size as F cols \n");
+		fprintf(stderr, "ERROR in rc_kalman_new_alloc_ekf, vector x_pre must have same size as F cols \n");
 		return -1;
 	}
 
@@ -427,7 +431,7 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vec
 		fprintf(stderr, "ERROR in rc_kalman_ekf_update F must be square\n");
 		return -1;
 	}
-	if(unlikely(G.rows != G.cols)){
+	if(unlikely(G.rows != F.rows)){
 		fprintf(stderr, "ERROR in rc_kalman_ekf_update G must be square\n");
 		return -1;
 	}
@@ -435,7 +439,7 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vec
 		fprintf(stderr, "ERROR in rc_kalman_ekf_update x_pre must have same dimension as rows of F\n");
 		return -1;
 	}
-	if(unlikely(u.len != G.rows)){
+	if(unlikely(u.len != G.cols)){
 		fprintf(stderr, "ERROR in rc_kalman_ekf_update u must have same dimension as rows of G\n");
 		return -1;
 	}
