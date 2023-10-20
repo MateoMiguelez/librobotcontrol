@@ -450,7 +450,7 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vec
 
 	// for linear case only, calculate x_pre from linear system model
 	// x_pre = x[k|k-1] = F*x[k-1|k-1] +  G*u[k-1]
-	rc_matrix_times_col_vec(kf->F, kf->x_est, &tmp1);
+	rc_matrix_times_col_vec(kf->F, kf->x_pre, &tmp1);
 	rc_matrix_times_col_vec(kf->G, u, &tmp2);
 	rc_vector_sum(tmp1, tmp2, &kf->x_pre);
 
@@ -502,8 +502,6 @@ int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t 
 	// copy in new jacobians and x prediction
 	rc_matrix_duplicate(H, &kf->H);
 
-
-
 	// S = H*P*H^T + R
 	// Calculate H^T, borrow S for H^T
 	rc_matrix_transpose(kf->H, &S);			// S = H^T
@@ -520,7 +518,7 @@ int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t 
 	// h[k] = H * x_pre[k]
 	// x[k|k] = x[k|k-1] + L[k]*(y[k]-h[k])
 	rc_matrix_times_col_vec(kf->H,kf->x_pre,&h);
-	rc_vector_subtract(y,h,&z);			// z = k-h
+	rc_vector_subtract(y,h,&z);					// z = k-h
 	rc_matrix_times_col_vec(L, z, &tmp1);		// temp = L*z
 	rc_vector_sum(kf->x_pre, tmp1, &kf->x_pre);	// x_pre = x + L*y
 
