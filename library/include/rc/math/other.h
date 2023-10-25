@@ -64,6 +64,14 @@ int rc_saturate_float(float* val, float min, float max);
  */
 int rc_saturate_double(double* val, double min, double max);
 
+/**
+ * @brief      Calculates a random number following the standard distribution
+ * accourding to the Box-Muller method.
+ *
+ * @return     Returns random number according to a standard distribution.
+ */
+double rc_random_normal();
+
 
 #ifdef  __cplusplus
 }

@@ -81,3 +81,17 @@ int rc_saturate_double(double* val, double min, double max)
 	}
 	return 0;
 }
+
+double rc_random_normal() {
+	double r = 0;
+	double u = 0;
+	double v = 0;
+	for(int i = 0; i < 20; i++){
+		u = ((double) rand() / (RAND_MAX)) * 2 - 1;
+		v = ((double) rand() / (RAND_MAX)) * 2 - 1;
+    	r = u * u + v * v;
+		if (r != 0 & r <= 1) break;
+	}
+    double c = sqrt(-2 * log(r) / r);
+    return u * c;
+}
