@@ -78,7 +78,7 @@ int rc_kalman_alloc_lin(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix
 }
 
 int rc_kalman_new_alloc(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix_t H, rc_matrix_t Q, 
-						rc_matrix_t R, rc_matrix_t Pi, rc_vector_t x_pre){
+						rc_matrix_t R, rc_matrix_t Pi, rc_vector_t u, rc_vector_t x_pre){
 	// sanity checks
 	if(kf==NULL){
 		fprintf(stderr, "ERROR in rc_kalman_new_alloc, received NULL pointer\n");
@@ -412,11 +412,12 @@ int rc_kalman_update_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t H, rc_vecto
 }
 
 
-int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vector_t u){
+int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_vector_t U, rc_vector_t u){
 	rc_matrix_t newP = RC_MATRIX_INITIALIZER;
 	rc_matrix_t FT = RC_MATRIX_INITIALIZER;
 	rc_vector_t tmp1 = RC_VECTOR_INITIALIZER;
 	rc_vector_t tmp2 = RC_VECTOR_INITIALIZER;
+	rc_vector_t Gu = RC_VECTOR_INITIALIZER;
 
 	// sanity checks
 	if(unlikely(kf==NULL)){
@@ -431,31 +432,19 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vec
 		fprintf(stderr, "ERROR in rc_kalman_ekf_update F must be square\n");
 		return -1;
 	}
-	if(unlikely(G.rows != F.rows)){
-		fprintf(stderr, "ERROR in rc_kalman_ekf_update G must be square\n");
-		return -1;
-	}
 	if(unlikely(kf->x_pre.len != F.rows)){
 		fprintf(stderr, "ERROR in rc_kalman_ekf_update x_pre must have same dimension as rows of F\n");
-		return -1;
-	}
-	if(unlikely(u.len != G.cols)){
-		fprintf(stderr, "ERROR in rc_kalman_ekf_update u must have same dimension as rows of G\n");
 		return -1;
 	}
 
 	// copy in new jacobians and x prediction
 	rc_matrix_duplicate(F, &kf->F);
-	rc_matrix_duplicate(G, &kf->G);
+	rc_matrix_times_col_vec(F, kf->x_pre, &kf->x_pre);
+    rc_vector_sum_inplace(&kf->x_pre, U);
+	rc_matrix_times_col_vec(G, u, &Gu);
+	rc_vector_sum_inplace(&kf->x_pre, Gu);
 
-	// for linear case only, calculate x_pre from linear system model
-	// x_pre = x[k|k-1] = F*x[k-1|k-1] +  G*u[k-1]
-	rc_matrix_times_col_vec(kf->F, kf->x_pre, &tmp1);
-	rc_matrix_times_col_vec(kf->G, u, &tmp2);
-	rc_vector_sum(tmp1, tmp2, &kf->x_pre);
 
-	// F is new now in non-linear case
-	// P[k|k-1] = F*P[k-1|k-1]*F^T + Q
 	rc_matrix_multiply(kf->F, kf->P, &newP);	// P_new = F*P_old
 	rc_matrix_transpose(kf->F, &FT);
 	rc_matrix_right_multiply_inplace(&newP, FT);	// P = F*P*F^T
@@ -473,12 +462,11 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vec
 }
 
 
-int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t y){
+int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t y, rc_vector_t h){
 	rc_matrix_t L = RC_MATRIX_INITIALIZER;
 	rc_matrix_t newP = RC_MATRIX_INITIALIZER;
 	rc_matrix_t S = RC_MATRIX_INITIALIZER;
 	rc_vector_t z = RC_VECTOR_INITIALIZER;
-	rc_vector_t h = RC_VECTOR_INITIALIZER;
 	rc_vector_t tmp1 = RC_VECTOR_INITIALIZER;
 
 	// sanity checks
@@ -515,12 +503,10 @@ int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t 
 	rc_algebra_invert_matrix_inplace(&S);		// S2^(-1) = S^(-1)
 	rc_matrix_right_multiply_inplace(&L, S);	// L = (P*H^T)*(S^-1)
 
-	// h[k] = H * x_pre[k]
 	// x[k|k] = x[k|k-1] + L[k]*(y[k]-h[k])
-	rc_matrix_times_col_vec(kf->H,kf->x_pre,&h);
 	rc_vector_subtract(y,h,&z);					// z = k-h
 	rc_matrix_times_col_vec(L, z, &tmp1);		// temp = L*z
-	rc_vector_sum(kf->x_pre, tmp1, &kf->x_pre);	// x_pre = x + L*y
+	rc_vector_sum_inplace(&kf->x_pre, tmp1);	// x_pre = x + L*y
 
 	// P[k|k] = (I - L*H)*P = P - L*H*P, reuse the matrix S.
 	rc_matrix_duplicate(kf->P, &newP);
@@ -539,4 +525,73 @@ int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t 
 
 	kf->step++;
 	return 0;
+}
+
+int rc_get_state_matrix(int Nx, rc_matrix_t A,  rc_vector_t V, double time_delta, rc_matrix_t* F, rc_vector_t* U){
+    if(A.cols != Nx){
+		fprintf(stderr, "ERROR in get_new_x, must have size Nx\n");
+		return -1;
+	}
+    if(A.rows != Nx){
+		fprintf(stderr, "ERROR in get_new_x, must have size Nx\n");
+		return -1;
+	}
+    rc_matrix_t phi  = RC_MATRIX_INITIALIZER; //Turns into F
+    rc_matrix_t psi  = RC_MATRIX_INITIALIZER;
+    rc_vector_t gamma  = RC_VECTOR_INITIALIZER; //Turns into U
+    rc_matrix_t newA = RC_MATRIX_INITIALIZER;
+    rc_matrix_t AT = RC_MATRIX_INITIALIZER;
+    rc_vector_t TV = RC_VECTOR_INITIALIZER;
+    rc_matrix_duplicate(A, &newA);
+    rc_vector_zeros(&TV, Nx);
+    rc_matrix_zeros(&AT, Nx, Nx);
+    rc_matrix_identity(&phi, Nx);
+    rc_matrix_identity(&psi, Nx);
+    rc_vector_zeros(&gamma, Nx);
+    double scalar = 1;
+    int newD_zero_flag = 1;
+    for(int i = 1; i < 10; i++){
+        scalar = scalar*time_delta/(i+1);
+        if(i != 1){
+            rc_matrix_left_multiply_inplace(newA, &newA);
+        }
+        rc_matrix_duplicate(newA, &AT);
+        rc_matrix_times_scalar(&AT, scalar);
+        rc_matrix_add_inplace(&psi, AT);
+
+        //Check if DT is zero at any point to avoid useless iterations
+        newD_zero_flag = 1;
+        for(int k = 0; k < Nx; k++){
+            for(int l = 0; l < Nx; l++){
+                if(AT.d[k][l] != 0){
+                    newD_zero_flag = 0;
+                    break;
+                };
+            }
+            if (newD_zero_flag == 0) break;
+        }
+        if(newD_zero_flag == 1) break;
+    }
+
+    //Calculating PHI
+    rc_matrix_duplicate(A, &AT);
+    rc_matrix_times_scalar(&AT, time_delta);
+    rc_matrix_right_multiply_inplace(&AT, psi);
+    rc_matrix_add_inplace(&phi, AT);
+
+    //Calculating gamma
+    rc_vector_duplicate(V, &TV);
+    rc_vector_times_scalar(&TV, time_delta);
+    rc_matrix_times_col_vec(psi, TV, &gamma);
+
+    //Our matrices phi and gamma Are F and U
+    rc_matrix_duplicate(phi, F);
+    rc_vector_duplicate(gamma, U);
+
+    rc_matrix_free(&psi);
+    rc_vector_free(&gamma);
+    rc_matrix_free(&newA);
+    rc_matrix_free(&AT);
+    rc_vector_free(&TV);
+
 }

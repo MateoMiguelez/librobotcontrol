@@ -167,7 +167,7 @@ int rc_kalman_alloc_lin(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix
  * @return     0 on success, -1 on failure
  */
 int rc_kalman_new_alloc(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_matrix_t H, rc_matrix_t Q, 
-						rc_matrix_t R, rc_matrix_t Pi, rc_vector_t x_pre);
+						rc_matrix_t R, rc_matrix_t Pi, rc_vector_t u, rc_vector_t x_pre);
 
 /**
  * @brief      Allocates memory for a Kalman filter of given dimensions
@@ -265,19 +265,19 @@ int rc_kalman_update_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t H, rc_vecto
  * @brief      Kalman Filter measurement update step.
  *
  * Updates P & x_est. Assumes that you have done the non-linear prediction
- * step in your own function which should calculate the Jacobians F(x[k|k-1]) &
- * G(x[k|k-1])
+ * step in your own function (like rc_get_state_matrix())
  *
  * Also updates the step counter in the rc_kalman_t struct
  *
  * @param      kf     pointer to struct to be updated
  * @param[in]  F      Jacobian of state transition matrix linearized at x_pre
  * @param[in]  G      Jacobian of control matrix linearized at x_pre
+ * @param[in]  U      Constant vector to calculate X
  * @param[in]  u	  control vector
  *
  * @return     0 on success, -1 on failure
  */
-int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vector_t u);
+int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_vector_t U, rc_vector_t u);
 
 /**
  * @brief      Kalman Filter measurement update step.
@@ -294,10 +294,27 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G,  rc_vec
  * @param      kf     pointer to struct to be updated
  * @param[in]  H      Jacobian of observation matrix linearized at x_pre
  * @param[in]  y      new sensor data
+ * @param[in]  h      expected measurement
  *
  * @return     0 on success, -1 on failure
  */
-int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t y);
+int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t y, rc_vector_t h);
+
+/**
+ * @brief      Kalman Filter measurement update step.
+ *
+ * Also updates the step counter in the rc_kalman_t struct
+ *
+ * @param[in]  	Nx     		State system size
+ * @param[in]  	A      		Ai = dx g(t,xi(t),ui)
+ * @param[in]  	V      		Vi = g(t,xi(t),ui) - dx g(t,xi(t),ui)*x(ti)
+ * @param[in]	time_delta  Time Step
+ * @param	   	F      		Stores state matrix
+ * @param	   	U      		Stores constant vector
+ *
+ * @return     0 on success, -1 on failure
+ */
+int rc_get_state_matrix(int Nx, rc_matrix_t A,  rc_vector_t V, double time_delta, rc_matrix_t* F, rc_vector_t* U);
 
 #ifdef __cplusplus
 }

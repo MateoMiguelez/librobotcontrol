@@ -144,6 +144,17 @@ int rc_algebra_lin_system_solve_qr(rc_matrix_t A, rc_vector_t b, rc_vector_t* x)
  */
 int rc_algebra_fit_ellipsoid(rc_matrix_t points, rc_vector_t* center, rc_vector_t* lengths);
 
+/**
+ * @brief      Computes Cholesky LDL decomposition
+ *
+ *
+ * @param[in]  A   Matrix to decompose
+ * @param[out] L   Triangular matrix
+ * @param[out] D   Diagonal Matrix
+ *
+ * @return     Returns 0 on success or -1 on failure.
+ */
+int rc_ldl_decomposition(rc_matrix_t A, rc_matrix_t* L, rc_matrix_t* D);
 
 #ifdef  __cplusplus
 }

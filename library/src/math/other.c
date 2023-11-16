@@ -86,12 +86,16 @@ double rc_random_normal() {
 	double r = 0;
 	double u = 0;
 	double v = 0;
-	for(int i = 0; i < 20; i++){
+	int i = 0;
+	while(r == 0 || r >= 1){
 		u = ((double) rand() / (RAND_MAX)) * 2 - 1;
 		v = ((double) rand() / (RAND_MAX)) * 2 - 1;
     	r = u * u + v * v;
-		if (r != 0 & r <= 1) break;
+		//if (i >= 20) break;
+		i++;
 	}
-    double c = sqrt(-2 * log(r) / r);
-    return u * c;
+	if(r == 0) r = 1;
+	double c = sqrt(-2.0*log(r)/r);
+	c = u * c;
+    return c;
 }

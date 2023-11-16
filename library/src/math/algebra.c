@@ -590,3 +590,70 @@ int rc_algebra_fit_ellipsoid(rc_matrix_t pts, rc_vector_t* ctr, rc_vector_t* len
 	rc_vector_free(&f);
 	return 0;
 }
+
+int rc_ldl_decomposition(rc_matrix_t A, rc_matrix_t* L, rc_matrix_t* D){
+	if(D->cols != D->rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, D not square\n");
+		return -1;
+	}
+	if(L->cols != L->rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, L not square\n");
+		return -1;
+	}
+	if(L->cols != D->rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, D size != L size\n");
+		return -1;
+	}
+	if(A.cols != A.rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, L not square\n");
+		return -1;
+	}
+	if(L->cols != A.rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, A size != L size\n");
+		return -1;
+	}
+	rc_matrix_t new_A = RC_MATRIX_INITIALIZER;
+	rc_matrix_t new_D = RC_MATRIX_INITIALIZER;
+	rc_matrix_t new_L = RC_MATRIX_INITIALIZER;
+	rc_matrix_duplicate(A, &new_A);
+	rc_matrix_symmetrize(&new_A);
+	rc_matrix_zeros(&new_D, D->rows, D->cols);
+	rc_matrix_zeros(&new_L, L->rows, L->cols);
+
+	double sum = 0;
+	for(int j = 0; j < new_D.cols; j++){
+		sum = 0;
+		for(int k = 0; k < j; k++){
+			sum += new_L.d[j][k]*new_L.d[j][k]*new_D.d[k][k];
+		}
+		new_D.d[j][j] = new_A.d[j][j] - sum;
+
+		if(new_D.d[j][j] == 0){
+			fprintf(stderr,"ERROR in rc_ldl_decomposition, 0 in diagonal D\n");
+			return -1;
+		}
+
+		sum = 0;
+		for(int i = 0; i < new_L.rows; i++){
+			if(i > j){
+				for(int k = 0; k < j; k++){
+					sum += new_L.d[i][k]*new_L.d[j][k]*new_D.d[k][k];
+				}
+				new_L.d[i][j] = (A.d[i][j] - sum)/new_D.d[j][j];
+			}
+			else if( i == j){
+				new_L.d[i][j] = 1;
+			}
+			else{
+				new_L.d[i][j] = 0;
+			}
+			
+		}
+	}
+	rc_matrix_duplicate(new_D, D);
+	rc_matrix_duplicate(new_L, L);
+
+	rc_matrix_free(&new_A);
+	rc_matrix_free(&new_D);
+	rc_matrix_free(&new_L);
+}
