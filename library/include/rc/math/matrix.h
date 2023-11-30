@@ -389,6 +389,15 @@ double rc_matrix_determinant(rc_matrix_t A);
  */
 int rc_matrix_symmetrize(rc_matrix_t* P);
 
+/**
+ * @brief      Generates matrix with random normal numbers in each position
+ *
+ *
+ * @param      A     Matrix to store generated numbers
+ *
+ * @return     0 on success, -1 on failure
+ */
+int random_normal_matrix(rc_matrix_t* A);
 
 #ifdef __cplusplus
 }

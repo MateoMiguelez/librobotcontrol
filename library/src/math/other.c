@@ -87,7 +87,7 @@ double rc_random_normal() {
 	double u = 0;
 	double v = 0;
 	int i = 0;
-	while(r == 0 || r >= 1){
+	while(r == 0 || r >= 1 || r <= -1){
 		u = ((double) rand() / (RAND_MAX)) * 2 - 1;
 		v = ((double) rand() / (RAND_MAX)) * 2 - 1;
     	r = u * u + v * v;

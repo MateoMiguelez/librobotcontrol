@@ -156,6 +156,17 @@ int rc_algebra_fit_ellipsoid(rc_matrix_t points, rc_vector_t* center, rc_vector_
  */
 int rc_ldl_decomposition(rc_matrix_t A, rc_matrix_t* L, rc_matrix_t* D);
 
+/**
+ * @brief      Computes Cholesky LL decomposition
+ *
+ *
+ * @param[in]  A   Matrix to decompose
+ * @param[out] L   Triangular matrix
+ *
+ * @return     Returns 0 on success or -1 on failure.
+ */
+int rc_ll_decomposition(rc_matrix_t A, rc_matrix_t* L);
+
 #ifdef  __cplusplus
 }
 #endif

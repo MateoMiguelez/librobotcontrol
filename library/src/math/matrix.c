@@ -568,3 +568,15 @@ int rc_matrix_symmetrize(rc_matrix_t* P)
 	}
 	return 0;
 }
+
+int random_normal_matrix(rc_matrix_t* A){
+	if(A->cols != A->rows){
+		return -1;
+	}
+	for(int i=0; i < A->rows; i++){
+		for(int j=0; j < A->cols; j++){
+			A->d[i][j] = rc_random_normal();
+		}
+	}
+	return 0;
+}

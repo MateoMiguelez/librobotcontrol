@@ -657,3 +657,37 @@ int rc_ldl_decomposition(rc_matrix_t A, rc_matrix_t* L, rc_matrix_t* D){
 	rc_matrix_free(&new_D);
 	rc_matrix_free(&new_L);
 }
+
+int rc_ll_decomposition(rc_matrix_t A, rc_matrix_t* L){
+	if(L->cols != L->rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, L not square\n");
+		return -1;
+	}
+	if(L->cols != A.rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, D size != L size\n");
+		return -1;
+	}
+	if(A.cols != A.rows){
+		fprintf(stderr,"ERROR in rc_ldl_decomposition, L not square\n");
+		return -1;
+	}
+	rc_matrix_t new_L = RC_MATRIX_INITIALIZER;
+	rc_matrix_zeros(&new_L, L->rows, L->cols);
+
+	double sum = 0;
+	for (int i = 0; i < A.cols; i++) {
+    for (int j = 0; j <= i; j++) {
+        float sum = 0;
+        for (int k = 0; k < j; k++)
+            sum += new_L.d[i][k] * new_L.d[j][k];
+
+        if (i == j)
+            new_L.d[i][j] = sqrt(A.d[i][i] - sum);
+        else
+            new_L.d[i][j] = (1.0 / new_L.d[j][j] * (A.d[i][j] - sum));
+    }
+}
+	rc_matrix_duplicate(new_L, L);
+
+	rc_matrix_free(&new_L);
+}
