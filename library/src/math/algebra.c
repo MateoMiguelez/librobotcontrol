@@ -20,7 +20,7 @@
 
 
 
-#define DEFAULT_ZERO_TOLERANCE 1e-8 // consider v to be zero if fabs(v)<ZERO_TOLERANCE
+#define DEFAULT_ZERO_TOLERANCE 1e-25 // consider v to be zero if fabs(v)<ZERO_TOLERANCE
 
 // current tolerance, can be changed with rc_algebra_set_zero_tolerance.
 double zero_tolerance=DEFAULT_ZERO_TOLERANCE;

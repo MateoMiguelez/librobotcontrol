@@ -282,6 +282,24 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_vect
 /**
  * @brief      Kalman Filter measurement update step.
  *
+ * Updates P & x_est. Simplified function with no 
+ * control matrix or vector G,U and u
+ *
+ * Also updates the step counter in the rc_kalman_t struct
+ *
+ * @param      kf     pointer to struct to be updated
+ * @param[in]  F      Jacobian of state transition matrix linearized at x_pre
+ * @param[in]  G      Jacobian of control matrix linearized at x_pre
+ * @param[in]  U      Constant vector to calculate X
+ * @param[in]  u	  control vector
+ *
+ * @return     0 on success, -1 on failure
+ */
+int rc_kalman_predict_simple(rc_kalman_t* kf, rc_matrix_t F);
+
+/**
+ * @brief      Kalman Filter measurement update step.
+ *
  * -Kalman measurement Update:
  * - P[k|k-1] = F*P[k-1|k-1]*F^T + Q
  * - S = H*P*H^T + R

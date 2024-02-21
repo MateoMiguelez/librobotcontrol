@@ -80,7 +80,6 @@ int rc_matrix_free(rc_matrix_t* A)
 	return 0;
 }
 
-
 int rc_matrix_zeros(rc_matrix_t* A, int rows, int cols)
 {
 	int i;
@@ -110,6 +109,56 @@ int rc_matrix_zeros(rc_matrix_t* A, int rows, int cols)
 	}
 	// manually fill in the pointer to each row
 	for(i=0;i<rows;i++) A->d[i]=(double*)(((char*)ptr) + (i*cols*sizeof(double)));
+	A->rows = rows;
+	A->cols = cols;
+	A->initialized = 1;
+	return 0;
+}
+
+int rc_matrix_with_vector_free(rc_matrix_with_vector_t* A)
+{
+	rc_matrix_with_vector_t new = RC_MATRIX_INITIALIZER;
+	if(unlikely(A==NULL)){
+		fprintf(stderr,"ERROR in rc_matrix_free, received NULL pointer\n");
+		return -1;
+	}
+	// free memory allocated for the data then the major array
+	if(A->d!=NULL && A->initialized==1) free(A->d[0]);
+	free(A->d);
+	// zero out the struct
+	*A = new;
+	return 0;
+}
+
+int rc_matrix_with_vector_zeros(rc_matrix_with_vector_t* A, int rows, int cols, int vector_size)
+{
+	int i;
+	// sanity checks
+	if(unlikely(rows<1 || cols<1)){
+		fprintf(stderr,"ERROR in rc_create_matrix_zeros, rows and cols must be >=1\n");
+		return -1;
+	}
+	if(unlikely(A==NULL)){
+		fprintf(stderr,"ERROR in rc_create_matrix_zeros, received NULL pointer\n");
+		return -1;
+	}
+	// make sure A is freed before allocating new memory
+	rc_matrix_with_vector_free(A);
+	// allocate contiguous memory for the major(row) pointers
+	A->d = (rc_vector_t**)malloc(rows*sizeof(double*));
+	if(unlikely(A->d==NULL)){
+		fprintf(stderr,"ERROR in rc_create_matrix_zeros, not enough memory\n");
+		return -1;
+	}
+	// allocate contiguous memory for the actual data
+	void* ptr = calloc(rows*cols,sizeof(double)*vector_size);
+	if(unlikely(ptr==NULL)){
+		fprintf(stderr,"ERROR in rc_create_matrix_zeros, not enough memory\n");
+		free(A->d);
+		return -1;
+	}
+	// manually fill in the pointer to each row
+	for(i=0;i<rows;i++) A->d[i]=(rc_vector_t*)(((char*)ptr) + (i*cols*sizeof(double)));
 	A->rows = rows;
 	A->cols = cols;
 	A->initialized = 1;

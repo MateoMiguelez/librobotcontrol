@@ -36,6 +36,23 @@ typedef struct rc_matrix_t{
 	int initialized;///< set to 1 once memory has been allocated
 } rc_matrix_t;
 
+/**
+ * @brief      Struct containing the state of a matrix and a pointer to
+ * dynamically allocated memory to hold its contents. Each element is a rc_vector_t
+ *
+ * Set and read values directly with this code:
+ * @code{.c}
+ * matrix.d[row][col] = new_vector; // set value in the matrix
+ * value = matrix.d[row][col];     // get value from the matrix
+ * @endcode
+ */
+typedef struct rc_matrix_with_vector_t{
+	int rows;	///< number of rows in the matrix
+	int cols;	///< number of columns in the matrix
+	rc_vector_t** d;	///< pointer to allocated 2d array of vector elements
+	int initialized;///< set to 1 once memory has been allocated
+} rc_matrix_with_vector_t;
+
 #define RC_MATRIX_INITIALIZER {\
 	.rows = 0,\
 	.cols = 0,\
@@ -90,6 +107,20 @@ int rc_matrix_alloc(rc_matrix_t* A, int rows, int cols);
 int rc_matrix_free(rc_matrix_t* A);
 
 /**
+ * @brief      Frees the memory allocated for a matrix A
+ *
+ * Also sets the dimensions and initialized flag to 0 to indicate to other
+ * functions that A no longer points to allocated memory and cannot be used
+ * until more memory is allocated such as with rc_matrix_alloc or
+ * rc_matrix_zeros. Will only fail and return -1 if it is passed a NULL pointer.
+ *
+ * @param      A     Pointer to user's matrix struct
+ *
+ * @return     0 on success, -1 on failure.
+ */
+int rc_matrix_with_vector_free(rc_matrix_with_vector_t* A);
+
+/**
  * @brief      Resizes matrix A and allocates memory for a matrix with specified rows &
 * columns. The new memory is pre-filled with zeros using calloc. Any existing memory
 * allocated for A is freed if necessary to avoid memory leaks.
@@ -101,6 +132,19 @@ int rc_matrix_free(rc_matrix_t* A);
  * @return     0 on success, -1 on failure.
  */
 int rc_matrix_zeros(rc_matrix_t* A, int rows, int cols);
+
+/**
+ * @brief      Resizes matrix A and allocates memory for a matrix with specified rows &
+* columns. The new memory is pre-filled with zeros using calloc. Any existing memory
+* allocated for A is freed if necessary to avoid memory leaks.
+ *
+ * @param      A     Pointer to user's matrix with vector struct
+ * @param[in]  rows  number of rows
+ * @param[in]  cols  number of columns
+ *
+ * @return     0 on success, -1 on failure.
+ */
+int rc_matrix_with_vector_zeros(rc_matrix_with_vector_t* A, int rows, int cols, int vector_size);
 
 /**
  * @brief      Resizes A to be a square identity matrix with dimensions

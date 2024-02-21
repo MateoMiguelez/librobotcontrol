@@ -10,6 +10,7 @@
 #include "../../include/rc/math/algebra.h"
 #include "../../include/rc/math/kalman.h"
 #include "algebra_common.h"
+#include <time.h>
 
 rc_kalman_t rc_kalman_empty(void)
 {
@@ -444,6 +445,50 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_vect
 	rc_matrix_times_col_vec(G, u, &Gu);
 	rc_vector_sum_inplace(&kf->x_pre, Gu);
 
+
+	rc_matrix_multiply(kf->F, kf->P, &newP);	// P_new = F*P_old
+	rc_matrix_transpose(kf->F, &FT);
+	rc_matrix_right_multiply_inplace(&newP, FT);	// P = F*P*F^T
+	rc_matrix_add(newP, kf->Q, &kf->P);		// P = F*P*F^T + Q
+	rc_matrix_symmetrize(&kf->P);			// Force symmetric P
+
+	// cleanup
+	rc_matrix_free(&newP);
+	rc_matrix_free(&FT);
+	rc_vector_free(&tmp1);
+	rc_vector_free(&tmp2);
+
+	kf->step++;
+	return 0;
+}
+
+int rc_kalman_predict_simple(rc_kalman_t* kf, rc_matrix_t F){
+	rc_matrix_t newP = RC_MATRIX_INITIALIZER;
+	rc_matrix_t FT = RC_MATRIX_INITIALIZER;
+	rc_vector_t tmp1 = RC_VECTOR_INITIALIZER;
+	rc_vector_t tmp2 = RC_VECTOR_INITIALIZER;
+
+	// sanity checks
+	if(unlikely(kf==NULL)){
+		fprintf(stderr, "ERROR in rc_kalman_ekf_update, received NULL pointer\n");
+		return -1;
+	}
+	if(unlikely(kf->initialized !=1)){
+		fprintf(stderr, "ERROR in rc_kalman_ekf_update, kf uninitialized\n");
+		return -1;
+	}
+	if(unlikely(F.rows != F.cols)){
+		fprintf(stderr, "ERROR in rc_kalman_ekf_update F must be square\n");
+		return -1;
+	}
+	if(unlikely(kf->x_pre.len != F.rows)){
+		fprintf(stderr, "ERROR in rc_kalman_ekf_update x_pre must have same dimension as rows of F\n");
+		return -1;
+	}
+
+	// copy in new jacobians and x prediction
+	rc_matrix_duplicate(F, &kf->F);
+	rc_matrix_times_col_vec(F, kf->x_pre, &kf->x_pre);
 
 	rc_matrix_multiply(kf->F, kf->P, &newP);	// P_new = F*P_old
 	rc_matrix_transpose(kf->F, &FT);
