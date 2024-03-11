@@ -463,10 +463,10 @@ int rc_kalman_predict_ekf(rc_kalman_t* kf, rc_matrix_t F, rc_matrix_t G, rc_vect
 }
 
 int rc_kalman_predict_simple(rc_kalman_t* kf, rc_matrix_t F){
-	rc_matrix_t newP = RC_MATRIX_INITIALIZER;
-	rc_matrix_t FT = RC_MATRIX_INITIALIZER;
-	rc_vector_t tmp1 = RC_VECTOR_INITIALIZER;
-	rc_vector_t tmp2 = RC_VECTOR_INITIALIZER;
+	// rc_matrix_t newP = RC_MATRIX_INITIALIZER;
+	// rc_matrix_t FT = RC_MATRIX_INITIALIZER;
+	// rc_vector_t tmp1 = RC_VECTOR_INITIALIZER;
+	// rc_vector_t tmp2 = RC_VECTOR_INITIALIZER;
 
 	// sanity checks
 	if(unlikely(kf==NULL)){
@@ -487,20 +487,44 @@ int rc_kalman_predict_simple(rc_kalman_t* kf, rc_matrix_t F){
 	}
 
 	// copy in new jacobians and x prediction
-	rc_matrix_duplicate(F, &kf->F);
-	rc_matrix_times_col_vec(F, kf->x_pre, &kf->x_pre);
+	/*No F update needed as it is constant*/
+	// rc_matrix_duplicate(F, &kf->F);
+	// rc_matrix_times_col_vec(F, kf->x_pre, &kf->x_pre);
 
-	rc_matrix_multiply(kf->F, kf->P, &newP);	// P_new = F*P_old
-	rc_matrix_transpose(kf->F, &FT);
-	rc_matrix_right_multiply_inplace(&newP, FT);	// P = F*P*F^T
-	rc_matrix_add(newP, kf->Q, &kf->P);		// P = F*P*F^T + Q
+	//Manually updating states to avoid multiplying by big F
+	double delta_time = 0.025;
+	double a = kf->x_pre.d[kf->x_pre.len-1];
+	double v = kf->x_pre.d[kf->x_pre.len-2];
+	double z = kf->x_pre.d[kf->x_pre.len-3];
+	kf->x_pre.d[kf->x_pre.len-3] = z + v*delta_time + a*delta_time*delta_time;
+	kf->x_pre.d[kf->x_pre.len-2] = v + a*delta_time;
+
+	//Since F is similar to I we will only multiply specific positions
+	int rows = kf->P.rows;
+	for(int i = 0; i < kf->P.cols; i++){
+		kf->P.d[rows-3][i] = kf->P.d[rows-3][i] + kf->P.d[rows-2][i]*delta_time + kf->P.d[rows-1][i]*delta_time*delta_time;
+		kf->P.d[rows-2][i] = kf->P.d[rows-2][i] + kf->P.d[rows-1][i]*delta_time;
+	}
+	//Multiplying P*F^T
+	int cols = kf->P.rows;
+	for(int i = 0; i < kf->P.rows; i++){
+		kf->P.d[i][cols-3] = kf->P.d[i][cols-3] + kf->P.d[i][cols-2]*delta_time + kf->P.d[i][cols-1]*delta_time*delta_time;
+		kf->P.d[i][cols-2] = kf->P.d[i][cols-2] + kf->P.d[i][cols-1]*delta_time;
+	}
+
+	// rc_matrix_multiply(kf->F, kf->P, &newP);	// P_new = F*P_old
+	// rc_matrix_transpose(kf->F, &FT);
+	// rc_matrix_right_multiply_inplace(&newP, FT);	// P = F*P*F^T
+	// rc_matrix_add(newP, kf->Q, &kf->P);		// P = F*P*F^T + Q
+
+	rc_matrix_add_inplace(&kf->P, kf->Q);		// P = F*P*F^T + Q
 	rc_matrix_symmetrize(&kf->P);			// Force symmetric P
 
 	// cleanup
-	rc_matrix_free(&newP);
-	rc_matrix_free(&FT);
-	rc_vector_free(&tmp1);
-	rc_vector_free(&tmp2);
+	// rc_matrix_free(&newP);
+	// rc_matrix_free(&FT);
+	// rc_vector_free(&tmp1);
+	// rc_vector_free(&tmp2);
 
 	kf->step++;
 	return 0;
@@ -543,7 +567,7 @@ int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t 
 	rc_matrix_left_multiply_inplace(kf->P, &S);	// S = P*H^T
 	rc_matrix_left_multiply_inplace(kf->H, &S);	// S = H*(P*H^T)
 	rc_matrix_add_inplace(&S, kf->R);		// S = H*P*H^T + R
-
+	
 	// L = P*(H^T)*(S^-1)
 	rc_algebra_invert_matrix_inplace(&S);		// S2^(-1) = S^(-1)
 	rc_matrix_right_multiply_inplace(&L, S);	// L = (P*H^T)*(S^-1)
@@ -551,7 +575,7 @@ int rc_kalman_prediction_update_ekf(rc_kalman_t* kf, rc_matrix_t H, rc_vector_t 
 	// x[k|k] = x[k|k-1] + L[k]*(y[k]-h[k])
 	rc_vector_subtract(y,h,&z);					// z = k-h
 	rc_matrix_times_col_vec(L, z, &tmp1);		// temp = L*z
-	rc_vector_sum_inplace(&kf->x_pre, tmp1);	// x_pre = x + L*y
+	rc_vector_sum_inplace(&kf->x_pre, tmp1);	// x_pre = x + L*z
 
 	// P[k|k] = (I - L*H)*P = P - L*H*P, reuse the matrix S.
 	rc_matrix_duplicate(kf->P, &newP);

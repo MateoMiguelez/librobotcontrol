@@ -277,10 +277,10 @@ int rc_algebra_invert_matrix(rc_matrix_t A, rc_matrix_t* Ainv)
 		fprintf(stderr,"ERROR in rc_matrix_inverse, nonsquare matrix\n");
 		return -1;
 	}
-	if(fabs(rc_matrix_determinant(A)) < zero_tolerance){
+	/*if(fabs(rc_matrix_determinant(A)) < zero_tolerance){
 		fprintf(stderr,"ERROR in rc_matrix_inverse, matrix is singular\n");
 		return -1;
-	}
+	}*/
 	// allocate memory
 	if(unlikely(rc_matrix_identity(&D,A.cols))){
 		fprintf(stderr,"ERROR in rc_matrix_inverse, failed to alloc identity\n");
